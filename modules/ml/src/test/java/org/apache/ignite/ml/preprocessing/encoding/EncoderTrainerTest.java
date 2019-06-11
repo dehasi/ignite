@@ -50,7 +50,7 @@ public class EncoderTrainerTest extends TrainerTest {
         data.put(5, new DenseVector(new Serializable[]{"Friday", "June"}));
         data.put(6, new DenseVector(new Serializable[]{"Sunday", "August"}));
 
-        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(0 , 1).labeled(0);
+        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(1).labeled(0);
 
         DatasetBuilder<Integer, Vector> datasetBuilder = new LocalDatasetBuilder<>(data, parts);
 
@@ -79,7 +79,7 @@ public class EncoderTrainerTest extends TrainerTest {
         data.put(5, VectorUtils.of(2.0, 45.0));
         data.put(6, VectorUtils.of(14.0, 12.0));
 
-        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(0 , 1);
+        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(1).labeled(0);
 
         DatasetBuilder<Integer, Vector> datasetBuilder = new LocalDatasetBuilder<>(data, parts);
 
@@ -108,7 +108,7 @@ public class EncoderTrainerTest extends TrainerTest {
         data.put(5, VectorUtils.of(2.0, 45.0));
         data.put(6, VectorUtils.of(14.0, 12.0));
 
-        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(0 , 1);
+        final Vectorizer<Integer, Vector, Integer, Double> vectorizer = new DummyVectorizer<Integer>(1).labeled(0);
 
         DatasetBuilder<Integer,Vector> datasetBuilder = new LocalDatasetBuilder<>(data, parts);
 

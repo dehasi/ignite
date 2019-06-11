@@ -27,7 +27,7 @@ import org.apache.ignite.ml.math.primitives.vector.Vector;
  * Simple naive Bayes model which predicts result value {@code y} belongs to a class {@code C_k, k in [0..K]} as {@code
  * p(C_k,y) = p(C_k)*p(y_1,C_k) *...*p(y_n,C_k) / p(y)}. Return the number of the most possible class.
  */
-public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exportable<GaussianNaiveBayesModel>, Serializable {
+public class GaussianNaiveBayesModel<LABEL extends Serializable> implements IgniteModel<Vector, LABEL>, Exportable<GaussianNaiveBayesModel>, Serializable {
     /** */
     private static final long serialVersionUID = -127386523291350345L;
 
@@ -41,10 +41,10 @@ public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exp
     private final double[] classProbabilities;
 
     /** Labels. */
-    private final double[] labels;
+    private final LABEL[] labels;
 
     /** Feature sum, squared sum and count per label. */
-    private final GaussianNaiveBayesSumsHolder sumsHolder;
+    private final GaussianNaiveBayesSumsHolder<LABEL> sumsHolder;
 
     /**
      * @param means Means of features for all classes.
@@ -54,7 +54,7 @@ public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exp
      * @param sumsHolder Feature sum, squared sum and count sum per label. This data is used for future model updating.
      */
     public GaussianNaiveBayesModel(double[][] means, double[][] variances,
-        double[] classProbabilities, double[] labels, GaussianNaiveBayesSumsHolder sumsHolder) {
+        double[] classProbabilities, LABEL[] labels, GaussianNaiveBayesSumsHolder<LABEL> sumsHolder) {
         this.means = means;
         this.variances = variances;
         this.classProbabilities = classProbabilities;
@@ -68,7 +68,7 @@ public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exp
     }
 
     /** Returns a number of class to which the input belongs. */
-    @Override public Double predict(Vector vector) {
+    @Override public LABEL predict(Vector vector) {
         double[] probapilityPowers = probabilityPowers(vector);
 
         int max = 0;
@@ -79,7 +79,7 @@ public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exp
                 max = i;
             }
         }
-        return labels[max];
+        return null;
     }
 
     /**
@@ -115,12 +115,12 @@ public class GaussianNaiveBayesModel implements IgniteModel<Vector, Double>, Exp
     }
 
     /** */
-    public double[] getLabels() {
+    public LABEL[] getLabels() {
         return labels;
     }
 
     /** */
-    public GaussianNaiveBayesSumsHolder getSumsHolder() {
+    public GaussianNaiveBayesSumsHolder<LABEL> getSumsHolder() {
         return sumsHolder;
     }
 

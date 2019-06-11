@@ -17,6 +17,7 @@
 
 package org.apache.ignite.ml.naivebayes.gaussian;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +36,7 @@ import org.apache.ignite.ml.trainers.SingleLabelDatasetTrainer;
  * Prior probabilities can be also set by {@code setPriorProbabilities} or {@code withEquiprobableClasses}. If {@code
  * equiprobableClasses} is set, the probabilities of all classes will be {@code 1/k}, where {@code k} is classes count.
  */
-public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<GaussianNaiveBayesModel> {
+public class GaussianNaiveBayesTrainer<LABEL extends Serializable> extends SingleLabelDatasetTrainer<GaussianNaiveBayesModel<LABEL>> {
     /** Preset prior probabilities. */
     private double[] priorProbabilities;
 
@@ -43,23 +44,23 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
     private boolean equiprobableClasses;
 
     /** {@inheritDoc} */
-    @Override public <K, V> GaussianNaiveBayesModel fit(DatasetBuilder<K, V> datasetBuilder,
+    @Override public <K, V> GaussianNaiveBayesModel<LABEL> fit(DatasetBuilder<K, V> datasetBuilder,
                                                         Preprocessor<K, V> extractor) {
         return updateModel(null, datasetBuilder, extractor);
     }
 
     /** {@inheritDoc} */
-    @Override public boolean isUpdateable(GaussianNaiveBayesModel mdl) {
+    @Override public boolean isUpdateable(GaussianNaiveBayesModel<LABEL> mdl) {
         return true;
     }
 
     /** {@inheritDoc} */
-    @Override public GaussianNaiveBayesTrainer withEnvironmentBuilder(LearningEnvironmentBuilder envBuilder) {
+    @Override public GaussianNaiveBayesTrainer<LABEL> withEnvironmentBuilder(LearningEnvironmentBuilder envBuilder) {
         return (GaussianNaiveBayesTrainer)super.withEnvironmentBuilder(envBuilder);
     }
 
     /** {@inheritDoc} */
-    @Override protected <K, V> GaussianNaiveBayesModel updateModel(GaussianNaiveBayesModel mdl,
+    @Override protected <K, V> GaussianNaiveBayesModel<LABEL> updateModel(GaussianNaiveBayesModel<LABEL> mdl,
                                                                    DatasetBuilder<K, V> datasetBuilder, Preprocessor<K, V> extractor) {
         assert datasetBuilder != null;
 
@@ -68,13 +69,13 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
             (env, upstream, upstreamSize) -> new EmptyContext(),
             (env, upstream, upstreamSize, ctx) -> {
 
-                GaussianNaiveBayesSumsHolder res = new GaussianNaiveBayesSumsHolder();
+                GaussianNaiveBayesSumsHolder<LABEL> res = new GaussianNaiveBayesSumsHolder<>();
                 while (upstream.hasNext()) {
                     UpstreamEntry<K, V> entity = upstream.next();
 
                     LabeledVector lv = extractor.apply(entity.getKey(), entity.getValue());
                     Vector features = lv.features();
-                    Double label = (Double) lv.label();
+                    LABEL label = (LABEL)lv.label();
 
                     double[] toMeans;
                     double[] sqSum;
@@ -104,7 +105,7 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
                 return res;
             }
         )) {
-            GaussianNaiveBayesSumsHolder sumsHolder = dataset.compute(t -> t, (a, b) -> {
+            GaussianNaiveBayesSumsHolder<LABEL> sumsHolder = dataset.compute(t -> t, (a, b) -> {
                 if (a == null)
                     return b;
                 if (b == null)
@@ -114,8 +115,8 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
             if (mdl != null && mdl.getSumsHolder() != null)
                 sumsHolder = sumsHolder.merge(mdl.getSumsHolder());
 
-            List<Double> sortedLabels = new ArrayList<>(sumsHolder.featureCountersPerLbl.keySet());
-            sortedLabels.sort(Double::compareTo);
+            List<LABEL> sortedLabels = new ArrayList<>(sumsHolder.featureCountersPerLbl.keySet());
+//            sortedLabels.sort(Object::hashCode);
             assert !sortedLabels.isEmpty() : "The dataset should contain at least one feature";
 
             int labelCount = sortedLabels.size();
@@ -124,12 +125,12 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
             double[][] means = new double[labelCount][featureCount];
             double[][] variances = new double[labelCount][featureCount];
             double[] classProbabilities = new double[labelCount];
-            double[] labels = new double[labelCount];
+            LABEL[] labels = null;
 
             long datasetSize = sumsHolder.featureCountersPerLbl.values().stream().mapToInt(i -> i).sum();
 
             int lbl = 0;
-            for (Double label : sortedLabels) {
+            for (LABEL label : sortedLabels) {
                 int count = sumsHolder.featureCountersPerLbl.get(label);
                 double[] sum = sumsHolder.featureSumsPerLbl.get(label);
                 double[] sqSum = sumsHolder.featureSquaredSumsPerLbl.get(label);
@@ -153,7 +154,7 @@ public class GaussianNaiveBayesTrainer extends SingleLabelDatasetTrainer<Gaussia
                 ++lbl;
             }
 
-            return new GaussianNaiveBayesModel(means, variances, classProbabilities, labels, sumsHolder);
+            return new GaussianNaiveBayesModel<>(means, variances, classProbabilities, labels, sumsHolder);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
