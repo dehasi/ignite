@@ -56,7 +56,7 @@ public class GaussianNaiveBayesTrainer<LABEL extends Serializable> extends Singl
 
     /** {@inheritDoc} */
     @Override public GaussianNaiveBayesTrainer<LABEL> withEnvironmentBuilder(LearningEnvironmentBuilder envBuilder) {
-        return (GaussianNaiveBayesTrainer)super.withEnvironmentBuilder(envBuilder);
+        return (GaussianNaiveBayesTrainer<LABEL>)super.withEnvironmentBuilder(envBuilder);
     }
 
     /** {@inheritDoc} */
@@ -64,7 +64,7 @@ public class GaussianNaiveBayesTrainer<LABEL extends Serializable> extends Singl
                                                                    DatasetBuilder<K, V> datasetBuilder, Preprocessor<K, V> extractor) {
         assert datasetBuilder != null;
 
-        try (Dataset<EmptyContext, GaussianNaiveBayesSumsHolder> dataset = datasetBuilder.build(
+        try (Dataset<EmptyContext, GaussianNaiveBayesSumsHolder<LABEL>> dataset = datasetBuilder.build(
             envBuilder,
             (env, upstream, upstreamSize) -> new EmptyContext(),
             (env, upstream, upstreamSize, ctx) -> {
@@ -73,7 +73,7 @@ public class GaussianNaiveBayesTrainer<LABEL extends Serializable> extends Singl
                 while (upstream.hasNext()) {
                     UpstreamEntry<K, V> entity = upstream.next();
 
-                    LabeledVector lv = extractor.apply(entity.getKey(), entity.getValue());
+                    LabeledVector<LABEL> lv = extractor.apply(entity.getKey(), entity.getValue());
                     Vector features = lv.features();
                     LABEL label = (LABEL)lv.label();
 
