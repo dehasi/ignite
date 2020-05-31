@@ -501,8 +501,9 @@ public class JdbcRequestHandler implements ClientListenerRequestHandler {
 
             processor.onFail(e);
 
-            if (X.cause(e, QueryCancelledException.class) != null)
-                return exceptionToResult(new QueryCancelledException());
+            QueryCancelledException cause = X.cause(e, QueryCancelledException.class);
+            if (cause != null)
+                return exceptionToResult(cause);
             else
                 return new JdbcResponse(IgniteQueryErrorCode.UNKNOWN, "Server error: " + e);
         }
@@ -745,8 +746,9 @@ public class JdbcRequestHandler implements ClientListenerRequestHandler {
 
             U.error(log, "Failed to execute SQL query [reqId=" + req.requestId() + ", req=" + req + ']', e);
 
-            if (X.cause(e, QueryCancelledException.class) != null)
-                return exceptionToResult(new QueryCancelledException());
+            QueryCancelledException cause = X.cause(e, QueryCancelledException.class);
+            if (cause != null)
+                return exceptionToResult(cause);
             else
                 return exceptionToResult(e);
         }
@@ -858,8 +860,9 @@ public class JdbcRequestHandler implements ClientListenerRequestHandler {
         catch (Exception e) {
             U.error(log, "Failed to fetch SQL query result [reqId=" + req.requestId() + ", req=" + req + ']', e);
 
-            if (X.cause(e, QueryCancelledException.class) != null)
-                return exceptionToResult(new QueryCancelledException());
+            QueryCancelledException cause = X.cause(e, QueryCancelledException.class);
+            if (cause != null)
+                return exceptionToResult(cause);
             else
                 return exceptionToResult(e);
         }
